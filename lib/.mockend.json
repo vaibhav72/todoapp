@@ -1,0 +1,11 @@
+{
+"Task":{
+    "title":"string",
+    "date":"date",
+    "starttime":"string",
+    "endtime":"string",
+    "description":"string",
+    "category":"string"
+}
+
+}
