@@ -1,7 +1,13 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
-
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewTask extends StatefulWidget {
   @override
@@ -10,10 +16,19 @@ class NewTask extends StatefulWidget {
 
 class _NewTaskState extends State<NewTask> {
   String selected_value_Start = 'AM';
+  String selected_value_timeStart = '01:00';
+
+  String selected_value_timeEnd = '02:00';
   String selected_value_End = 'AM';
+  String description = "";
+  String title = "";
+  bool success = false;
+  String email = "";
 
   String category = "";
   DateTime selectedDate = DateTime.now();
+  String startTime = "12:00";
+  String endTime = "12:00";
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
@@ -27,14 +42,70 @@ class _NewTaskState extends State<NewTask> {
     });
   }
 
+  getCreds() async {
+    final prefs = await SharedPreferences.getInstance();
+    var v = prefs.getString("email");
+    setState(() {
+      email = v;
+    });
+  }
+
+  createTask() async {
+    String url =
+        "https://api.airtable.com/v0/app8U8XEOBD1xcUSm/Table%201?maxRecords=3&view=Grid%20view";
+    Map<String, String> header = {
+      "Authorization": "Bearer keyXhXanKoSLRFF2r",
+      "Content-Type": "application/json"
+    };
+    String body = json.encode({
+      "records": [
+        {
+          "fields": {
+            "title": title,
+            "category": category,
+            "starttime": selected_value_timeStart + selected_value_Start,
+            "endtime": selected_value_timeEnd + selected_value_End,
+            "date": selectedDate.toString(),
+            "description": description,
+            "email": email
+          }
+        },
+      ]
+    });
+
+    http.Response response = await http.post(url, headers: header, body: body);
+
+    Map<String, dynamic> result = json.decode(response.body);
+    print(result.toString());
+    if (response.statusCode == 200) {
+      setState(() {
+        success = true;
+      });
+    }
+
+    if (success)
+      return true;
+    else
+      return false;
+  }
+
+  @override
+  void initState() {
+    getCreds();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(
-          Icons.arrow_back_ios,
-          color: Colors.black,
-        ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color: Colors.black,
+            )),
         backgroundColor: Color(0xFFF9BE7C),
         elevation: 0,
       ),
@@ -65,6 +136,11 @@ class _NewTaskState extends State<NewTask> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextField(
+                          onChanged: (value) => {
+                            setState(() {
+                              title = value;
+                            })
+                          },
                           style: TextStyle(fontSize: 20),
                           cursorColor: Colors.black,
                           decoration: InputDecoration(
@@ -144,16 +220,50 @@ class _NewTaskState extends State<NewTask> {
                           children: <Widget>[
                             Container(
                               width: 80,
-                              child: TextField(
-                                style: TextStyle(fontSize: 20),
-                                cursorColor: Colors.black,
-                                decoration: InputDecoration(
-                                    hintText: '4:00',
-                                    labelStyle: TextStyle(color: Colors.black),
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: UnderlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black))),
+                              child: DropdownButton(
+                                icon: Icon(Icons.arrow_downward),
+                                elevation: 0,
+                                onChanged: (String newValue) {
+                                  setState(() {
+                                    selected_value_timeStart = newValue;
+                                  });
+                                },
+                                value: selected_value_timeStart,
+                                items: [
+                                  "01:00",
+                                  "01:30",
+                                  "02:00",
+                                  "02:30",
+                                  "03:00",
+                                  "03:30",
+                                  "04:00",
+                                  "04:30",
+                                  "05:00",
+                                  "05:30",
+                                  "06:00",
+                                  "06:30",
+                                  "07:00",
+                                  "07:30",
+                                  "08:00",
+                                  "08:30",
+                                  "09:00",
+                                  "09:30",
+                                  "10:00",
+                                  "10:30",
+                                  "11:00",
+                                  "11:30",
+                                  "12:00",
+                                  "12:30"
+                                ].map((e) {
+                                  return DropdownMenuItem<String>(
+                                      child: Text(
+                                        e,
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            color: Colors.black38),
+                                      ),
+                                      value: e);
+                                }).toList(),
                               ),
                             ),
                             Container(
@@ -197,19 +307,52 @@ class _NewTaskState extends State<NewTask> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: <Widget>[
                             Container(
-                              width: 80,
-                              child: TextField(
-                                cursorColor: Colors.black,
-                                style: TextStyle(fontSize: 20),
-                                decoration: InputDecoration(
-                                    hintText: '8:00',
-                                    labelStyle: TextStyle(color: Colors.black),
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: UnderlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black))),
-                              ),
-                            ),
+                                width: 80,
+                                child: DropdownButton(
+                                  icon: Icon(Icons.arrow_downward),
+                                  elevation: 0,
+                                  onChanged: (String newValue) {
+                                    setState(() {
+                                      selected_value_timeEnd = newValue;
+                                    });
+                                  },
+                                  value: selected_value_timeEnd,
+                                  items: [
+                                    "01:00",
+                                    "01:30",
+                                    "02:00",
+                                    "02:30",
+                                    "03:00",
+                                    "03:30",
+                                    "04:00",
+                                    "04:30",
+                                    "05:00",
+                                    "05:30",
+                                    "06:00",
+                                    "06:30",
+                                    "07:00",
+                                    "07:30",
+                                    "08:00",
+                                    "08:30",
+                                    "09:00",
+                                    "09:30",
+                                    "10:00",
+                                    "10:30",
+                                    "11:00",
+                                    "11:30",
+                                    "12:00",
+                                    "12:30"
+                                  ].map((e) {
+                                    return DropdownMenuItem<String>(
+                                        child: Text(
+                                          e,
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.black38),
+                                        ),
+                                        value: e);
+                                  }).toList(),
+                                )),
                             Container(
                                 child: DropdownButton(
                               icon: Icon(Icons.arrow_downward),
@@ -241,6 +384,11 @@ class _NewTaskState extends State<NewTask> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
+                onChanged: (value) => {
+                  setState(() {
+                    description = value;
+                  })
+                },
                 style: TextStyle(fontSize: 20),
                 cursorColor: Colors.black,
                 decoration: InputDecoration(
@@ -264,20 +412,20 @@ class _NewTaskState extends State<NewTask> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: RaisedButton(
-                          color: category == "SPORT APP"
-                              ? Color(0xffe46472)
+                          color: category == "Environment"
+                              ? Colors.green
                               : Colors.grey[300],
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                           onPressed: () {
                             setState(() {
-                              category = 'SPORT APP';
+                              category = 'Environment';
                             });
                           },
                           child: Text(
-                            "SPORT APP",
+                            "Environment",
                             style: TextStyle(
-                              color: category == "SPORT APP"
+                              color: category == "Environment"
                                   ? Colors.white
                                   : Colors.black,
                             ),
@@ -287,20 +435,20 @@ class _NewTaskState extends State<NewTask> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: RaisedButton(
-                          color: category == "MEDICAL APP"
-                              ? Color(0xff6488e4)
+                          color: category == "Pets"
+                              ? Colors.blueAccent
                               : Colors.grey[300],
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                           onPressed: () {
                             setState(() {
-                              category = "MEDICAL APP";
+                              category = "Pets";
                             });
                           },
                           child: Text(
-                            "MEDICAL APP",
+                            "Pets",
                             style: TextStyle(
-                              color: category == "MEDICAL APP"
+                              color: category == "Pets"
                                   ? Colors.white
                                   : Colors.black,
                             ),
@@ -310,20 +458,20 @@ class _NewTaskState extends State<NewTask> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: RaisedButton(
-                          color: category == "RENT APP"
-                              ? Color(0xff309397)
+                          color: category == "Electricity"
+                              ? Colors.orange[300]
                               : Colors.grey[300],
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                           onPressed: () {
                             setState(() {
-                              category = "RENT APP";
+                              category = "Electricity";
                             });
                           },
                           child: Text(
-                            "RENT APP",
+                            "Electricity",
                             style: TextStyle(
-                              color: category == "RENT APP"
+                              color: category == "Electricity"
                                   ? Colors.white
                                   : Colors.black,
                             ),
@@ -333,54 +481,31 @@ class _NewTaskState extends State<NewTask> {
                     ],
                   ),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
                       Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(20.0),
                         child: RaisedButton(
-                          color: category == "BANKING APP"
-                              ? Color(0xff0d253f)
+                          color: category == "Person"
+                              ? Colors.blue
                               : Colors.grey[300],
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30)),
                           onPressed: () {
                             setState(() {
-                              category = "BANKING APP";
+                              category = "Person";
                             });
                           },
                           child: Text(
-                            "BANKING APP",
+                            "Person",
                             style: TextStyle(
-                              color: category == "BANKING APP"
+                              color: category == "Person"
                                   ? Colors.white
                                   : Colors.black,
                             ),
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: RaisedButton(
-                          color: category == "GAMING PLATFORM APP"
-                              ? Color(0xfff9be7c)
-                              : Colors.grey[300],
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                          onPressed: () {
-                            setState(() {
-                              category = "GAMING PLATFORM APP";
-                            });
-                          },
-                          child: Text(
-                            "GAMING PLATFORM APP",
-                            style: TextStyle(
-                              color: category == "GAMING PLATFORM APP"
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                          ),
-                        ),
-                      )
                     ],
                   )
                 ],
@@ -391,7 +516,20 @@ class _NewTaskState extends State<NewTask> {
       ),
       floatingActionButton: FloatingActionButton.extended(
           backgroundColor: Color(0xFF6488E4),
-          onPressed: () {},
+          onPressed: () async {
+            bool done = await createTask();
+
+            if (done) {
+              Fluttertoast.showToast(
+                msg: "Created Task Successfully",
+                textColor: Colors.white,
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: Colors.red,
+              );
+              Navigator.pop(context);
+            }
+          },
           label: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text("Create Task"),

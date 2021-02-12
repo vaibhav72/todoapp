@@ -1,3 +1,7 @@
+import 'package:boocmarq_assignment/auth.dart';
+import 'package:boocmarq_assignment/displayTasks.dart';
+import 'package:boocmarq_assignment/driver.dart';
+import 'package:boocmarq_assignment/home.dart';
 import 'package:boocmarq_assignment/profile.dart';
 import 'package:boocmarq_assignment/newTaskPage.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +34,7 @@ class MyApp extends StatelessWidget {
           // closer together (more dense) than on mobile platforms.
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: NewTask());
+        home: Auth());
   }
 }
 
